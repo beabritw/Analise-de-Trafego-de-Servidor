@@ -48,10 +48,15 @@ Siga o passo a passo abaixo. Todos os comandos devem ser executados no seu termi
     ```bash
     # Cria a pasta 'venv'
     python3 -m venv venv
+    
+    # No Windows, use:
+    python -m venv venv
 
     # Ativa o ambiente (Linux/macOS)
     source venv/bin/activate
-    # No Windows, use: venv\Scripts\activate
+    
+    # No Windows, use:
+    venv\Scripts\activate
     ```
 
 4.  **Instale as dependências do projeto:**
@@ -60,6 +65,10 @@ Siga o passo a passo abaixo. Todos os comandos devem ser executados no seu termi
     # Instala as bibliotecas de produção e desenvolvimento
     python3 -m pip install -r requirements.txt
     python3 -m pip install -r requirements-dev.txt
+
+    # No Windows, use: venv\Scripts\activate
+    python -m pip install -r requirements.txt
+    python -m pip install -r requirements-dev.txt
     ```
 
 ### ⚙️ Configuração
@@ -71,6 +80,9 @@ A aplicação precisa saber qual endereço IP do servidor ela deve monitorar. Es
     ```bash
     # Este comando copia o template para o seu arquivo de configuração local
     cp .env.example .env
+    
+    # No windows, use:
+    copy .env.example .env
     ```
 
 2.  **Abra o arquivo `.env`** com seu editor de código.
@@ -94,6 +106,9 @@ O servidor web é iniciado com o Uvicorn. Como a captura de pacotes requer privi
 ```bash
 # Estando na pasta 'backend/' e com o ambiente virtual (venv) ativo:
 PYTHONPATH=. sudo venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+# No Windows, use:
+
 ```
 
   * `PYTHONPATH=.` é necessário para garantir que o Python encontre os módulos do seu projeto corretamente.
