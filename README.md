@@ -27,7 +27,7 @@ O que você precisa ter instalado para rodar este projeto:
   * Python 3.12 ou superior
   * Privilégios de `sudo` / administrador (necessário para a captura de pacotes com Scapy)
 
-### 💾 Instalação
+### Instalação
 
 Siga o passo a passo abaixo. Todos os comandos devem ser executados no seu terminal.
 
@@ -66,7 +66,7 @@ Siga o passo a passo abaixo. Todos os comandos devem ser executados no seu termi
     python3 -m pip install -r requirements.txt
     python3 -m pip install -r requirements-dev.txt
 
-    # No Windows, use: venv\Scripts\activate
+    # No Windows, use:
     python -m pip install -r requirements.txt
     python -m pip install -r requirements-dev.txt
     ```
