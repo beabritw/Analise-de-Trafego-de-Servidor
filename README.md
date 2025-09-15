@@ -83,7 +83,7 @@ A aplicação precisa saber qual endereço IP do servidor ela deve monitorar. Es
 
     ```dotenv
     # Exemplo de como o .env deve ficar:
-    SERVER_IP="192.168.0.16"
+    SERVER_IP="000.000.0.00"
     TIME_WINDOW_SECONDS=5
     ```
 
