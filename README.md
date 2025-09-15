@@ -2,14 +2,14 @@
 
 Este projeto consiste em um sistema completo para captura, processamento e visualização de tráfego de rede de um servidor-alvo em tempo real. A aplicação utiliza Scapy para a captura de pacotes, FastAPI para a exposição dos dados via API RESTful e React para a construção de um dashboard web interativo.
 
-## ✨ Features
+## Features
 
   * **Captura de Pacotes:** Escuta em uma interface de rede específica para capturar pacotes de e para um IP alvo.
   * **Agregação em Tempo Real:** Processa e agrega os dados de tráfego (bytes de entrada/saída) em janelas de tempo discretas de 5 segundos.
   * **Agrupamento por Cliente:** Os dados são agrupados por cliente (endereço IP de origem/destino).
   * **API RESTful:** Um backend robusto com FastAPI serve os dados agregados para qualquer cliente web.
 
-## 🛠️ Stack Tecnológica
+## Tecnologias 
 
   * **Backend:**
       * **Linguagem:** Python 3.12+
@@ -19,16 +19,12 @@ Este projeto consiste em um sistema completo para captura, processamento e visua
       * **Gerenciamento de Ambiente:** Venv
       * **Testes:** Pytest
 
-## 🚀 Começando
-
-Siga estas instruções para obter uma cópia do projeto e executá-lo em sua máquina local para desenvolvimento e testes.
 
 ### Pré-requisitos
 
 O que você precisa ter instalado para rodar este projeto:
 
   * Python 3.12 ou superior
-  * Git para controle de versão
   * Privilégios de `sudo` / administrador (necessário para a captura de pacotes com Scapy)
 
 ### 💾 Instalação
@@ -38,7 +34,7 @@ Siga o passo a passo abaixo. Todos os comandos devem ser executados no seu termi
 1.  **Clone o repositório:**
 
     ```bash
-    git clone https://github.com/seu-usuario/Analise-de-Trafego-de-Servidor.git
+    git clone https://github.com/beabritw/Analise-de-Trafego-de-Servidor.git
     ```
 
 2.  **Navegue até o diretório do backend:**
@@ -126,6 +122,8 @@ python3 -m pytest -v
 ```
 
 ## 👥 Autores
+- Beatriz Brito - 2312130227
+- Gabriel Alves - 2312082030
 
 ## 📄 Licença
 
