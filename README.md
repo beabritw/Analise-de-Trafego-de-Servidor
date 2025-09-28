@@ -2,12 +2,14 @@
 
 Este projeto consiste em um sistema completo para captura, processamento e visualização de tráfego de rede de um servidor-alvo em tempo real. A aplicação utiliza Scapy para a captura de pacotes, FastAPI para a exposição dos dados via API RESTful e React para a construção de um dashboard web interativo.
 
-## Features
 
-  * **Captura de Pacotes:** Escuta em uma interface de rede específica para capturar pacotes de e para um IP alvo.
-  * **Agregação em Tempo Real:** Processa e agrega os dados de tráfego (bytes de entrada/saída) em janelas de tempo discretas de 5 segundos.
-  * **Agrupamento por Cliente:** Os dados são agrupados por cliente (endereço IP de origem/destino).
-  * **API RESTful:** Um backend robusto com FastAPI serve os dados agregados para qualquer cliente web.
+## Features
+- Captura de pacotes de/para um servidor alvo (via porta espelhada ou interface da máquina) com Scapy
+- Processa e agrega os dados de tráfego (bytes de entrada/saída) em janelas de tempo de 5 segundos (configurável no `.env`)
+- Agrupamento por cliente (endereço IP de origem/destino) e detalhamento por protocolo  
+- API RESTful (`/api/traffic`) retorna dados prontos para o frontend com FastAPI 
+- Visualização planejada (frontend com drill down de protocolos)  
+
 
 ## Tecnologias 
 
@@ -23,13 +25,16 @@ Este projeto consiste em um sistema completo para captura, processamento e visua
 ### Pré-requisitos
 
 O que você precisa ter instalado para rodar este projeto:
+- Python 3.12 ou superior
+- Privilégios de administrador (`sudo` no Linux ou Npcap no Windows) necessário para a captura de pacotes com Scapy
+- Git
 
-  * Python 3.12 ou superior
-  * Privilégios de `sudo` / administrador (necessário para a captura de pacotes com Scapy)
 
-### Instalação [linux]
+## Instalação
 
 Siga o passo a passo abaixo. Todos os comandos devem ser executados no seu terminal.
+
+### [Linux/macOS]
 
 1.  **Clone o repositório:**
 
@@ -61,9 +66,45 @@ Siga o passo a passo abaixo. Todos os comandos devem ser executados no seu termi
     python3 -m pip install -r requirements-dev.txt
     ```
 
-### ⚙️ Configuração
+### [Windows]
+
+1.  **Clone o repositório:**
+
+    ```bash
+    git clone https://github.com/beabritw/Analise-de-Trafego-de-Servidor.git
+    ```
+
+2.  **Navegue até o diretório do backend:**
+
+    ```bash
+    cd Analise-de-Trafego-de-Servidor/backend
+    ```
+
+3.  **Crie e ative o ambiente virtual:**
+
+    ```bash
+    # Cria a pasta 'venv'
+    python -m venv venv
+    
+    # Ativa o ambiente (Linux/macOS)
+    .\venv\Scripts\activate
+    ```
+
+4.  **Instale as dependências do projeto:**
+
+    ```bash
+    # Instala as bibliotecas de produção e desenvolvimento
+    pip install --upgrade pip
+    pip install -r requirements.txt
+    ```
+
+    
+## Configuração
 
 A aplicação precisa saber qual endereço IP do servidor ela deve monitorar. Esta configuração é feita através de um arquivo de ambiente.
+
+
+### [Linux/macOS]
 
 1.  **Crie seu arquivo de configuração local** a partir do exemplo fornecido:
 
@@ -76,47 +117,24 @@ A aplicação precisa saber qual endereço IP do servidor ela deve monitorar. Es
 
 3.  **Altere o valor da variável `SERVER_IP`** para o endereço IP da sua máquina na sua rede local.
 
-    ```dotenv
-    # Exemplo de como o .env deve ficar:
-    SERVER_IP="000.000.0.00"
-    TIME_WINDOW_SECONDS=5
-    ```
 
+### [Windows]
 
-### Instalação e configuração [windows]
-
-   ```bash
-    git clone https://github.com/beabritw/Analise-de-Trafego-de-Servidor.git
-    cd Analise-de-Trafego-de-Servidor
-    
-    python -m venv venv
-    
-    .\venv\Scripts\activate
-
-   ```
-mude para a pasta backend
-
-   ```bash
-    cd backend
-    pip install --upgrade pip
-    pip install -r requirements.txt
-    
-    copy .env.example .env
-    [edite o SERVER_IP com o ip da sua maquina, verifique com o comando ipconfig]
-   ```
-
-Vá para o site oficial do Npcap, baixe o instalador mais recente.
-Durante a instalação, certifique-se de marcar a opção "Install Npcap in WinPcap API-compatible Mode"
+1.  **Crie seu arquivo de configuração local** a partir do exemplo fornecido:
 
     ```bash
-    uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-
+    # Este comando copia o template para o seu arquivo de configuração local
+    copy .env.example .env
     ```
+2.  **Abra o arquivo `.env`** com seu editor de código.
 
-Teste no navegador (aparecera no terminal a endpoint)
+3.  **Altere o valor da variável `SERVER_IP`** para o endereço IP da sua máquina na sua rede local. Verifique seu IP com o comando ipconfig
+
+4. Vá para o site oficial do [Npcap](https://npcap.com/#download) e baixe o instalador mais recente.
+   Durante a instalação, certifique-se de marcar a opção **"Install Npcap in WinPcap API-compatible Mode"**
 
 
-## 💻 Uso
+## Uso
 
 Com o ambiente configurado, você pode agora executar o servidor e os testes.
 
@@ -124,43 +142,59 @@ Com o ambiente configurado, você pode agora executar o servidor e os testes.
 
 O servidor web é iniciado com o Uvicorn. Como a captura de pacotes requer privilégios elevados, o comando deve ser executado com `sudo`.
 
+#### [Linux/macOS]
 ```bash
 # Estando na pasta 'backend/' e com o ambiente virtual (venv) ativo:
 PYTHONPATH=. sudo venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-
-# No Windows, use:
-
 ```
 
   * `PYTHONPATH=.` é necessário para garantir que o Python encontre os módulos do seu projeto corretamente.
   * O servidor estará disponível em `http://0.0.0.0:8000`.
   * A documentação interativa da API estará disponível em `http://127.0.0.1:8000/docs`.
 
+#### [WIndows]
+
+```bash
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+
 ### Gerando Tráfego para Testes
 
 Para ver o sistema em ação, você precisa gerar tráfego para o `SERVER_IP` que você configurou.
 
 1.  **Abra um novo terminal** na mesma máquina.
+
+#### [Linux/macOS]
 2.  Inicie um servidor web simples na porta 8080:
     ```bash
     python3 -m http.server 8080
     ```
+    
+#### [Windows]
+2.  Inicie um servidor web simples na porta 8080:
+    ```bash
+    python -m http.server 8080
+    ```
+
 3.  Use **outro dispositivo** (como seu celular) na mesma rede Wi-Fi e acesse `http://<SEU_SERVER_IP>:8080` no navegador.
 4.  Consulte o endpoint `GET /api/traffic` na documentação (`/docs`) para ver os dados capturados.
 
-### Executando os Testes Automatizados
 
-Para garantir a qualidade e a integridade da lógica de negócio, execute a suíte de testes com Pytest.
+### Execução dos Testes Automatizados
 
 ```bash
 # Estando na pasta 'backend/' e com o ambiente virtual (venv) ativo:
-python3 -m pytest -v
+python3 -m pytest -v #linux
+python -m pytest -v #windows
+
 ```
 
-## 👥 Autores
+## Autores
+
 - Beatriz Brito - 2312130227
 - Gabriel Alves - 2312082030
 
-## 📄 Licença
+## Licença
 
 Este projeto está licenciado sob a Licença MIT - veja o arquivo [LICENSE](https://www.google.com/search?q=LICENSE) para mais detalhes.
