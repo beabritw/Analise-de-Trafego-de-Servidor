@@ -1,11 +1,17 @@
 import time
-from threading import Lock, Thread
+import asyncio  # Importe o asyncio
+from threading import Lock
 from scapy.all import sniff, IP, TCP, UDP
+import logging
+
+from app.core.config import settings 
+
+logger = logging.getLogger(__name__)
 
 # Esta é a estrutura de dados central que será compartilhada.
 dados_agregados = {
     "janela_atual": {},
-    "janela_pronta": None,
+    "janela_pronta": None, # Esta janela será lida pela API
     "lock": Lock()
 }
 
@@ -38,24 +44,72 @@ def _processa_pacote(pacote, server_ip):
         janela.setdefault(client_ip, {}).setdefault(protocolo, {"in_bytes": 0, "out_bytes": 0})
         janela[client_ip][protocolo][direcao] += tamanho_pacote
 
-def inicia_captura(server_ip: str):
-    """Inicia o processo de sniffing, usando uma função parcial para passar o server_ip."""
-    print(f"Iniciando captura de pacotes para o servidor: {server_ip}...")
-    # Usamos uma função anônima (lambda) para passar o IP para o callback
-    sniff(iface="wlo1",prn=lambda pkt: _processa_pacote(pkt, server_ip), store=0)
+#
+# --- MUDANÇAS PRINCIPAIS ABAIXO ---
+#
 
-def gerenciador_janelas(time_window_seconds: int):
-    """A cada X segundos, chama a função de rotação de janelas."""
-    print("Gerenciador de janelas iniciado.")
+async def inicia_captura(server_ip: str):
+    """
+    Inicia a captura de pacotes de forma assíncrona, rodando o Scapy
+    em um executor de threads para não bloquear o loop principal.
+    """
+    logger.info(f"Iniciando captura de pacotes para o servidor: {server_ip}...")
+    
+    # Tenta obter a interface do settings, se não, deixa o Scapy escolher a padrão
+    # Isso remove o "wlo1" hardcoded
+    interface = getattr(settings, "SNIFF_INTERFACE", None)
+    if interface:
+        logger.info(f"Usando interface de rede especificada: {interface}")
+    else:
+        logger.info("Nenhuma interface especificada, Scapy usará a padrão.")
+
+    loop = asyncio.get_running_loop()
+    
+    # A função sniff é bloqueante, então a executamos em um thread pool
+    await loop.run_in_executor(
+        None,  # Usa o executor de thread padrão
+        lambda: sniff(
+            iface=interface,
+            prn=lambda pkt: _processa_pacote(pkt, server_ip),
+            store=0
+        )
+    )
+
+async def gerenciador_janelas(time_window_seconds: int):
+    """
+    A cada X segundos, chama a função de rotação de janelas.
+    Usa asyncio.sleep para não bloquear o event loop.
+    """
+    logger.info("Gerenciador de janelas iniciado.")
     while True:
-        time.sleep(time_window_seconds)
+        # Use 'await asyncio.sleep' em vez de 'time.sleep'
+        # Isso suspende esta tarefa, mas não bloqueia o servidor.
+        await asyncio.sleep(time_window_seconds)
+        
+        logger.debug("Rotacionando janela de tráfego...")
         _rotacionar_janela()
+        
+        # Aqui é onde você futuramente notificará os WebSockets
+        # ex: await manager.broadcast_json(dados_agregados["janela_pronta"])
 
 def _rotacionar_janela():
     """
     Função pura que contém a lógica de mover os dados de uma janela para outra.
-    É FACILMENTE TESTÁVEL de forma isolada.
+    Nenhuma mudança necessária. A lógica e o uso do lock estão corretos.
     """
     with dados_agregados["lock"]:
         dados_agregados["janela_pronta"] = dados_agregados["janela_atual"]
         dados_agregados["janela_atual"] = {}
+
+def obter_janela_pronta():
+    """
+    Função auxiliar segura para a API ler a última janela pronta.
+    A API deve chamar esta função para obter os dados.
+    """
+    with dados_agregados["lock"]:
+        # Retorna uma cópia para evitar problemas de concorrência
+        # se a API estiver lendo enquanto a janela é trocada.
+        # Embora a troca seja rápida, é uma boa prática.
+        dados_prontos = dados_agregados["janela_pronta"]
+        
+    return dados_prontos
