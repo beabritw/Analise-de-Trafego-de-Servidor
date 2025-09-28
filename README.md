@@ -27,7 +27,7 @@ O que você precisa ter instalado para rodar este projeto:
   * Python 3.12 ou superior
   * Privilégios de `sudo` / administrador (necessário para a captura de pacotes com Scapy)
 
-### Instalação
+### Instalação [linux]
 
 Siga o passo a passo abaixo. Todos os comandos devem ser executados no seu terminal.
 
@@ -91,6 +91,28 @@ A aplicação precisa saber qual endereço IP do servidor ela deve monitorar. Es
     SERVER_IP="000.000.0.00"
     TIME_WINDOW_SECONDS=5
     ```
+
+### Instalação e configuração [windows]
+
+git clone https://github.com/beabritw/Analise-de-Trafego-de-Servidor.git
+cd Analise-de-Trafego-de-Servidor
+
+python -m venv venv
+
+.\venv\Scripts\activate
+
+pip install --upgrade pip
+pip install -r requirements.txt
+
+copy .env.example .env
+[edite o SERVER_IP com o ip da sua maquina, verifique com o comando ipconfig]
+
+Vá para o site oficial do Npcap, baixe o instalador mais recente.
+Durante a instalação, certifique-se de marcar a opção "Install Npcap in WinPcap API-compatible Mode"
+
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+
+teste no navegador (aparecera no terminal a endpoint)
 
 ## 💻 Uso
 
