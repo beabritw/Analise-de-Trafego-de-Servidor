@@ -49,12 +49,8 @@ Siga o passo a passo abaixo. Todos os comandos devem ser executados no seu termi
     # Cria a pasta 'venv'
     python3 -m venv venv
     
-    # No Windows, use: python -m venv venv
-
     # Ativa o ambiente (Linux/macOS)
     source venv/bin/activate
-    
-    # No Windows, use: venv\Scripts\activate
     ```
 
 4.  **Instale as dependências do projeto:**
@@ -63,10 +59,6 @@ Siga o passo a passo abaixo. Todos os comandos devem ser executados no seu termi
     # Instala as bibliotecas de produção e desenvolvimento
     python3 -m pip install -r requirements.txt
     python3 -m pip install -r requirements-dev.txt
-
-    # No Windows, use:
-    # python -m pip install -r requirements.txt
-    # python -m pip install -r requirements-dev.txt
     ```
 
 ### ⚙️ Configuração
@@ -78,8 +70,6 @@ A aplicação precisa saber qual endereço IP do servidor ela deve monitorar. Es
     ```bash
     # Este comando copia o template para o seu arquivo de configuração local
     cp .env.example .env
-    
-    # No windows, use: copy .env.example .env
     ```
 
 2.  **Abra o arquivo `.env`** com seu editor de código.
@@ -92,27 +82,34 @@ A aplicação precisa saber qual endereço IP do servidor ela deve monitorar. Es
     TIME_WINDOW_SECONDS=5
     ```
 
+
 ### Instalação e configuração [windows]
 
-git clone https://github.com/beabritw/Analise-de-Trafego-de-Servidor.git
-cd Analise-de-Trafego-de-Servidor
-
-python -m venv venv
-
-.\venv\Scripts\activate
-
-pip install --upgrade pip
-pip install -r requirements.txt
-
-copy .env.example .env
-[edite o SERVER_IP com o ip da sua maquina, verifique com o comando ipconfig]
+    ```bash
+    git clone https://github.com/beabritw/Analise-de-Trafego-de-Servidor.git
+    cd Analise-de-Trafego-de-Servidor
+    
+    python -m venv venv
+    
+    .\venv\Scripts\activate
+    
+    pip install --upgrade pip
+    pip install -r requirements.txt
+    
+    copy .env.example .env
+    [edite o SERVER_IP com o ip da sua maquina, verifique com o comando ipconfig]
+    ```
 
 Vá para o site oficial do Npcap, baixe o instalador mais recente.
 Durante a instalação, certifique-se de marcar a opção "Install Npcap in WinPcap API-compatible Mode"
 
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+    ```bash
+    uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
-teste no navegador (aparecera no terminal a endpoint)
+    ```
+
+Teste no navegador (aparecera no terminal a endpoint)
+
 
 ## 💻 Uso
 
