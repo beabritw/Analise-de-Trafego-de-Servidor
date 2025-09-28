@@ -1,0 +1,20 @@
+# Ambientes Virtuais e Dependências
+.venv/
+venv/
+node_modules/
+
+# Caches e Arquivos Gerados
+__pycache__/
+*.pyc
+build/
+dist/
+
+# Arquivos de IDEs e Editores
+.vscode/
+.idea/
+.DS_Store
+
+# Arquivos de Ambiente com Segredos
+# NUNCA envie seus segredos para o Git.
+.env
+EOF
