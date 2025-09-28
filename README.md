@@ -85,20 +85,25 @@ A aplicação precisa saber qual endereço IP do servidor ela deve monitorar. Es
 
 ### Instalação e configuração [windows]
 
-    ```bash
+   ```bash
     git clone https://github.com/beabritw/Analise-de-Trafego-de-Servidor.git
     cd Analise-de-Trafego-de-Servidor
     
     python -m venv venv
     
     .\venv\Scripts\activate
-    
+
+   ```
+mude para a pasta backend
+
+   ```bash
+    cd backend
     pip install --upgrade pip
     pip install -r requirements.txt
     
     copy .env.example .env
     [edite o SERVER_IP com o ip da sua maquina, verifique com o comando ipconfig]
-    ```
+   ```
 
 Vá para o site oficial do Npcap, baixe o instalador mais recente.
 Durante a instalação, certifique-se de marcar a opção "Install Npcap in WinPcap API-compatible Mode"
