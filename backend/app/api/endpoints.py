@@ -1,3 +1,5 @@
+from fastapi import WebSocket, WebSocketDisconnect
+from .websockets import manager
 from fastapi import APIRouter
 from app.trafego.trafego import dados_agregados
 
@@ -27,3 +29,17 @@ def get_traffic_data():
             "protocols": protocolos
         })
     return resposta_formatada
+    
+
+@router.websocket("/ws/traffic")
+async def websocket_endpoint(websocket: WebSocket):
+    # Aceita e registra a nova conexão
+    await manager.connect(websocket)
+    try:
+        # Mantém a conexão viva, esperando por mensagens (não faremos nada com elas)
+        # ou até o cliente desconectar.
+        while True:
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        # Quando o cliente desconecta (fecha a aba), removemos ele da lista.
+        manager.disconnect(websocket)

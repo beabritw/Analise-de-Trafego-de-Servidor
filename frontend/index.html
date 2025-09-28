@@ -52,7 +52,6 @@
         const drilldownDiv = document.getElementById('drilldown-details');
 
         // Configuração inicial do nosso gráfico.
-        // Usamos 'let' para que possamos destruir e recriar o gráfico.
         let trafficChart = new Chart(ctx, {
             type: 'bar',
             data: {
@@ -78,12 +77,13 @@
                 scales: {
                     y: { beginAtZero: true }
                 },
-                // AQUI ACONTECE A MÁGICA DO DRILL DOWN
+                // Lógica para o drill down
                 onClick: (event, elements) => {
                     if (elements.length > 0) {
                         const clickedIndex = elements[0].index;
                         const clientIp = trafficChart.data.labels[clickedIndex];
-                        // Os dados completos estão armazenados em uma variável global
+                        
+                        // Os dados completos da API estão guardados em uma variável global
                         const clientData = window.currentApiData.find(c => c.client_ip === clientIp);
 
                         if (clientData) {
@@ -94,22 +94,26 @@
             }
         });
 
-        // Função para exibir os detalhes do drill down
+        // Função para exibir os detalhes do drill down no HTML
         function displayDrilldown(clientData) {
             let html = `<h3>Detalhes para o IP: ${clientData.client_ip}</h3><ul>`;
-            clientData.protocols.forEach(proto => {
-                html += `<li><strong>${Object.keys(proto)[0]}:</strong> Entrada: ${Object.values(proto)[0].in_bytes} bytes | Saída: ${Object.values(proto)[0].out_bytes} bytes</li>`;
-            });
+            
+            // A estrutura dos protocolos agora é um dicionário, então iteramos sobre as chaves
+            for (const protocolName in clientData.protocols) {
+                const protocolDetails = clientData.protocols[protocolName];
+                html += `<li><strong>${protocolName}:</strong> Entrada: ${protocolDetails.in_bytes} bytes | Saída: ${protocolDetails.out_bytes} bytes</li>`;
+            }
+
             html += `</ul>`;
             drilldownDiv.innerHTML = html;
         }
 
         // Função para atualizar o gráfico com novos dados
         function updateChart(apiData) {
-            // Guarda os dados atuais para usar no drill down
+            // Guarda os dados atuais em uma variável global para o drill down poder acessá-los
             window.currentApiData = apiData;
 
-            // Ordena os dados pelo tráfego total (entrada + saída)
+            // Ordena os dados pelo tráfego total (entrada + saída) para o gráfico ficar mais legível
             apiData.sort((a, b) => (b.total_in + b.total_out) - (a.total_in + a.total_out));
 
             trafficChart.data.labels = apiData.map(d => d.client_ip);
@@ -117,58 +121,54 @@
             trafficChart.data.datasets[1].data = apiData.map(d => d.total_out);
             trafficChart.update();
 
-            // Limpa os detalhes do drill down a cada atualização
+            // Limpa os detalhes do drill down a cada nova atualização
             drilldownDiv.innerHTML = '<p>Clique em uma barra do gráfico para ver os detalhes aqui.</p>';
         }
 
-        // 1. Busca os dados iniciais via HTTP
+        // 1. Busca os dados iniciais via HTTP para carregar o gráfico imediatamente
         async function fetchInitialData() {
             try {
                 const response = await fetch('http://localhost:8000/api/traffic');
                 const data = await response.json();
-                console.log("Dados iniciais recebidos:", data);
-                updateChart(data);
+                console.log("Dados iniciais recebidos via HTTP:", data);
+                if (data && data.length > 0) {
+                    updateChart(data);
+                }
             } catch (error) {
                 console.error('Erro ao buscar dados iniciais:', error);
                 drilldownDiv.innerHTML = '<p style="color: red;">Não foi possível conectar ao backend. Certifique-se de que ele está rodando em http://localhost:8000.</p>';
             }
         }
 
-        // 2. Conecta-se via WebSocket para atualizações em tempo real
+        // 2. Conecta-se via WebSocket para receber atualizações em tempo real
         function connectWebSocket() {
-            // O WebSocket não foi implementado no backend ainda, então esta parte é um placeholder.
-            // Quando você implementar o WebSocket no backend, descomente este código.
-            /*
-            const ws = new WebSocket('ws://localhost:8000/ws/traffic');
+            const ws = new WebSocket('ws://localhost:8000/api/ws/traffic');
 
             ws.onmessage = (event) => {
                 const data = JSON.parse(event.data);
                 console.log("Dados recebidos via WebSocket:", data);
-                // A API WebSocket deve retornar a lista de clientes diretamente
-                updateChart(data.clients); 
+                updateChart(data); 
             };
 
             ws.onopen = () => {
                 console.log('Conectado ao WebSocket.');
+                drilldownDiv.innerHTML = '<p>Conectado ao servidor. Aguardando dados em tempo real...</p>';
             };
 
             ws.onclose = () => {
                 console.log('Desconectado do WebSocket. Tentando reconectar em 5 segundos...');
-                setTimeout(connectWebSocket, 5000);
+                setTimeout(connectWebSocket, 5000); // Tenta reconectar automaticamente
             };
 
             ws.onerror = (error) => {
                 console.error('Erro no WebSocket:', error);
+                drilldownDiv.innerHTML = '<p style="color: red;">Erro na conexão WebSocket. Verifique o console.</p>';
             };
-            */
-            // Como o WebSocket não está pronto, vamos simular atualizações periódicas via HTTP
-            // APAGUE ou COMENTE esta linha quando for usar o WebSocket real.
-            setInterval(fetchInitialData, 5000);
         }
 
-        // Inicia o processo
-        fetchInitialData();
-        connectWebSocket();
+        // Inicia todo o processo
+        fetchInitialData(); // Pega a primeira carga
+        connectWebSocket(); // Inicia a conexão para atualizações em tempo real
 
     </script>
 </body>
