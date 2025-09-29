@@ -4,7 +4,7 @@ from threading import Lock
 from scapy.all import sniff, IP, TCP, UDP
 import logging
 
-from app.core.config import settings 
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +48,7 @@ def _processa_pacote(pacote, server_ip):
 # --- MUDANÇAS PRINCIPAIS ABAIXO ---
 #
 
-async def inicia_captura(server_ip: str):
+async def inicia_captura(server_ip: str, modo: str):
     """
     Inicia a captura de pacotes de forma assíncrona, rodando o Scapy
     em um executor de threads para não bloquear o loop principal.
@@ -69,7 +69,7 @@ async def inicia_captura(server_ip: str):
     await loop.run_in_executor(
         None,  # Usa o executor de thread padrão
         lambda: sniff(
-            iface=interface,
+            iface=modo,
             prn=lambda pkt: _processa_pacote(pkt, server_ip),
             store=0
         )
