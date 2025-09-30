@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Tráfego de Rede</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f2f5;
+            color: #333;
+        }
+        .container {
+            max-width: 1000px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1, h2 {
+            text-align: center;
+            color: #1d2129;
+        }
+        #drilldown-details {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #fafafa;
+            min-height: 50px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Dashboard de Tráfego em Tempo Real</h1>
+        <canvas id="trafficChart"></canvas>
+        
+        <h2>Detalhes por Protocolo (Drill Down)</h2>
+        <div id="drilldown-details">
+            <p>Clique em uma barra do gráfico para ver os detalhes aqui.</p>
+        </div>
+    </div>
+
+    <script>
+        const ctx = document.getElementById('trafficChart').getContext('2d');
+        const drilldownDiv = document.getElementById('drilldown-details');
+
+        // Configuração inicial do nosso gráfico.
+        let trafficChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: [], // IPs dos clientes
+                datasets: [
+                    {
+                        label: 'Tráfego de Entrada (bytes)',
+                        data: [],
+                        backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Tráfego de Saída (bytes)',
+                        data: [],
+                        backgroundColor: 'rgba(255, 99, 132, 0.6)',
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                scales: {
+                    y: { beginAtZero: true }
+                },
+                // Lógica para o drill down
+                onClick: (event, elements) => {
+                    if (elements.length > 0) {
+                        const clickedIndex = elements[0].index;
+                        const clientIp = trafficChart.data.labels[clickedIndex];
+                        
+                        // Os dados completos da API estão guardados em uma variável global
+                        const clientData = window.currentApiData.find(c => c.client_ip === clientIp);
+
+                        if (clientData) {
+                            displayDrilldown(clientData);
+                        }
+                    }
+                }
+            }
+        });
+
+        // Função para exibir os detalhes do drill down no HTML
+        function displayDrilldown(clientData) {
+            let html = `<h3>Detalhes para o IP: ${clientData.client_ip}</h3><ul>`;
+            
+            // A estrutura dos protocolos agora é um dicionário, então iteramos sobre as chaves
+            for (const protocolName in clientData.protocols) {
+                const protocolDetails = clientData.protocols[protocolName];
+                html += `<li><strong>${protocolName}:</strong> Entrada: ${protocolDetails.in_bytes} bytes | Saída: ${protocolDetails.out_bytes} bytes</li>`;
+            }
+
+            html += `</ul>`;
+            drilldownDiv.innerHTML = html;
+        }
+
+        // Função para atualizar o gráfico com novos dados
+        function updateChart(apiData) {
+            // Guarda os dados atuais em uma variável global para o drill down poder acessá-los
+            window.currentApiData = apiData;
+
+            // Ordena os dados pelo tráfego total (entrada + saída) para o gráfico ficar mais legível
+            apiData.sort((a, b) => (b.total_in + b.total_out) - (a.total_in + a.total_out));
+
+            trafficChart.data.labels = apiData.map(d => d.client_ip);
+            trafficChart.data.datasets[0].data = apiData.map(d => d.total_in);
+            trafficChart.data.datasets[1].data = apiData.map(d => d.total_out);
+            trafficChart.update();
+
+            // Limpa os detalhes do drill down a cada nova atualização
+            drilldownDiv.innerHTML = '<p>Clique em uma barra do gráfico para ver os detalhes aqui.</p>';
+        }
+
+        // 1. Busca os dados iniciais via HTTP para carregar o gráfico imediatamente
+        async function fetchInitialData() {
+            try {
+                const response = await fetch('http://localhost:8000/api/traffic');
+                const data = await response.json();
+                console.log("Dados iniciais recebidos via HTTP:", data);
+                if (data && data.length > 0) {
+                    updateChart(data);
+                }
+            } catch (error) {
+                console.error('Erro ao buscar dados iniciais:', error);
+                drilldownDiv.innerHTML = '<p style="color: red;">Não foi possível conectar ao backend. Certifique-se de que ele está rodando em http://localhost:8000.</p>';
+            }
+        }
+
+        // 2. Conecta-se via WebSocket para receber atualizações em tempo real
+        function connectWebSocket() {
+            const ws = new WebSocket('ws://localhost:8000/api/ws/traffic');
+
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                console.log("Dados recebidos via WebSocket:", data);
+                updateChart(data); 
+            };
+
+            ws.onopen = () => {
+                console.log('Conectado ao WebSocket.');
+                drilldownDiv.innerHTML = '<p>Conectado ao servidor. Aguardando dados em tempo real...</p>';
+            };
+
+            ws.onclose = () => {
+                console.log('Desconectado do WebSocket. Tentando reconectar em 5 segundos...');
+                setTimeout(connectWebSocket, 5000); // Tenta reconectar automaticamente
+            };
+
+            ws.onerror = (error) => {
+                console.error('Erro no WebSocket:', error);
+                drilldownDiv.innerHTML = '<p style="color: red;">Erro na conexão WebSocket. Verifique o console.</p>';
+            };
+        }
+
+        // Inicia todo o processo
+        fetchInitialData(); // Pega a primeira carga
+        connectWebSocket(); // Inicia a conexão para atualizações em tempo real
+
+    </script>
+</body>
+</html>

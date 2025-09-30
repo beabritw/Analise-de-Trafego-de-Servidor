@@ -1,10 +1,12 @@
 import time
-import asyncio  # Importe o asyncio
+import asyncio 
 from threading import Lock
-from scapy.all import sniff, IP, TCP, UDP
 import logging
+from scapy.all import sniff, IP, TCP, UDP
 
-from app.core.config import settings
+from app.core.utils import formatar_dados_para_frontend
+from app.api.websockets import manager
+from app.core.config import settings 
 
 logger = logging.getLogger(__name__)
 
@@ -77,20 +79,27 @@ async def inicia_captura(server_ip: str, modo: str):
 
 async def gerenciador_janelas(time_window_seconds: int):
     """
-    A cada X segundos, chama a função de rotação de janelas.
-    Usa asyncio.sleep para não bloquear o event loop.
+    A cada X segundos, rotaciona a janela e transmite os dados via WebSocket.
     """
     logger.info("Gerenciador de janelas iniciado.")
     while True:
-        # Use 'await asyncio.sleep' em vez de 'time.sleep'
-        # Isso suspende esta tarefa, mas não bloqueia o servidor.
         await asyncio.sleep(time_window_seconds)
         
         logger.debug("Rotacionando janela de tráfego...")
         _rotacionar_janela()
         
-        # Aqui é onde você futuramente notificará os WebSockets
-        # ex: await manager.broadcast_json(dados_agregados["janela_pronta"])
+        # --- A MUDANÇA ESTÁ AQUI ---
+        # Pega a janela que acabamos de aprontar
+        dados_prontos = obter_janela_pronta()
+        
+        if dados_prontos:
+            # Formata os dados usando nossa função centralizada
+            dados_formatados = formatar_dados_para_frontend(dados_prontos)
+            
+            # Envia os dados para TODOS os clientes conectados via WebSocket!
+            await manager.broadcast_json(dados_formatados)
+            logger.info(f"Nova janela de tráfego transmitida para {len(manager.active_connections)} cliente(s) via WebSocket.")
+
 
 def _rotacionar_janela():
     """
