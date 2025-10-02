@@ -8,10 +8,12 @@ router = APIRouter()
 @router.get("/traffic")
 def get_traffic_data():
     """Endpoint que retorna os dados da última janela de tempo completa."""
+    # Pega os dados brutos da última janela processada pelo módulo de tráfego
     dados_brutos = obter_janela_pronta()
     return formatar_dados_para_frontend(dados_brutos)
 
 
+#endpoint websocket pro frontend se conectar e recebr atualizacoes em tempo real
 @router.websocket("/ws/traffic")
 async def websocket_endpoint(websocket: WebSocket):
     # Aceita e registra a nova conexão
