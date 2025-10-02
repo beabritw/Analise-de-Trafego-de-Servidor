@@ -3,7 +3,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     SERVER_IP: str
     TIME_WINDOW_SECONDS: int
-
+    SNIFF_INTERFACE: str
     # Agora o .env está dois níveis acima (../..), mas Pydantic é esperto
     # e o encontrará subindo a árvore de diretórios.
     # Para ser explícito, você poderia usar:
