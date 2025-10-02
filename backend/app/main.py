@@ -14,8 +14,9 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-# Cria a aplicação principal FastAPI
+# Cria a aplicação principal FastAPI. a avriavel "app" é o nosso servidor
 app = FastAPI(
+    # Estes dados geram a documentação automática em /docs
     title="Dashboard de Tráfego de Rede",
     version="1.0.0",
     description="Backend para análise de tráfego em tempo real"
@@ -36,6 +37,8 @@ app.include_router(api_router, prefix="/api")
 
 
 # ---------- Ciclo de vida da aplicação ----------
+
+# Define uma função que será executada uma única vez, assim que o servidor iniciar
 @app.on_event("startup")
 async def startup_event():
     """

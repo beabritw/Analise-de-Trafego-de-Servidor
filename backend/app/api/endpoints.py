@@ -1,36 +1,19 @@
-from fastapi import WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from .websockets import manager
-from fastapi import APIRouter
-from app.trafego.trafego import dados_agregados
+from app.trafego.trafego import obter_janela_pronta
+from app.core.utils import formatar_dados_para_frontend
 
-# O 'APIRouter' funciona como um mini-aplicativo FastAPI, para organizar os endpoints
 router = APIRouter()
-
+    
 @router.get("/traffic")
 def get_traffic_data():
-    """
-    Endpoint que retorna os dados da última janela de tempo completa.
-    """
-    resposta_formatada = []
-    with dados_agregados["lock"]:
-        dados = dados_agregados["janela_pronta"]
-        if not dados:
-            return [] # Retorna uma lista vazia se não houver dados prontos
-    
-    # Formata os dados para um JSON amigável para o frontend
-    for ip, protocolos in dados.items():
-        total_in = sum(p["in_bytes"] for p in protocolos.values())
-        total_out = sum(p["out_bytes"] for p in protocolos.values())
-        
-        resposta_formatada.append({
-            "client_ip": ip,
-            "total_in": total_in,
-            "total_out": total_out,
-            "protocols": protocolos
-        })
-    return resposta_formatada
-    
+    """Endpoint que retorna os dados da última janela de tempo completa."""
+    # Pega os dados brutos da última janela processada pelo módulo de tráfego
+    dados_brutos = obter_janela_pronta()
+    return formatar_dados_para_frontend(dados_brutos)
 
+
+#endpoint websocket pro frontend se conectar e recebr atualizacoes em tempo real
 @router.websocket("/ws/traffic")
 async def websocket_endpoint(websocket: WebSocket):
     # Aceita e registra a nova conexão

@@ -10,31 +10,33 @@ from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
-# Esta é a estrutura de dados central que será compartilhada.
+# Estrutura de dados central que armazena o tráfego capturado
 dados_agregados = {
-    "janela_atual": {},
-    "janela_pronta": None, # Esta janela será lida pela API
-    "lock": Lock()
+    "janela_atual": {}, # Acumula os dados dos últimos 5 segundos
+    "janela_pronta": None, # Guarda a janela anterior, pronta para ser lida pela API
+    "lock": Lock() # evita que duas tarefas modifiquem os dados ao mesmo tempo
 }
 
 def _processa_pacote(pacote, server_ip):
     """Função interna para processar cada pacote capturado."""
-    if not pacote.haslayer(IP):
+    if not pacote.haslayer(IP): #garante q o pacote é do tipo ip
         return
 
     ip_layer = pacote[IP]
     tamanho_pacote = len(pacote)
     
+    #filtra o trafego, so importa p nos os pacotes q vem e vao p o nosso servidor
     client_ip, direcao = None, None
     if ip_layer.src == server_ip:
-        direcao = "out_bytes"
+        direcao = "out_bytes" # trafego de saída
         client_ip = ip_layer.dst
     elif ip_layer.dst == server_ip:
-        direcao = "in_bytes"
+        direcao = "in_bytes" #trafego de entradaa
         client_ip = ip_layer.src
     else:
         return
 
+#identifica o protocolo do pacote
     protocolo = "OUTROS"
     if pacote.haslayer(TCP):
         protocolo = "TCP"
@@ -46,9 +48,6 @@ def _processa_pacote(pacote, server_ip):
         janela.setdefault(client_ip, {}).setdefault(protocolo, {"in_bytes": 0, "out_bytes": 0})
         janela[client_ip][protocolo][direcao] += tamanho_pacote
 
-#
-# --- MUDANÇAS PRINCIPAIS ABAIXO ---
-#
 
 async def inicia_captura(server_ip: str):
     """
@@ -83,17 +82,18 @@ async def gerenciador_janelas(time_window_seconds: int):
     """
     logger.info("Gerenciador de janelas iniciado.")
     while True:
+        # pausa a execução desta função pelo tempo definido, mas sem bloquear o servidor
         await asyncio.sleep(time_window_seconds)
         
         logger.debug("Rotacionando janela de tráfego...")
+        # Move os dados da 'janela_atual' para a 'janela_pronta'
         _rotacionar_janela()
         
-        # --- A MUDANÇA ESTÁ AQUI ---
-        # Pega a janela que acabamos de aprontar
+        # Pega a janela que acabamos de preparar
         dados_prontos = obter_janela_pronta()
         
         if dados_prontos:
-            # Formata os dados usando nossa função centralizada
+            # Formata os dados para o padrão que o frontend espera.
             dados_formatados = formatar_dados_para_frontend(dados_prontos)
             
             # Envia os dados para TODOS os clientes conectados via WebSocket!
@@ -117,7 +117,7 @@ def obter_janela_pronta():
     """
     with dados_agregados["lock"]:
         # Retorna uma cópia para evitar problemas de concorrência
-        # se a API estiver lendo enquanto a janela é trocada.
+        # se a API estiver lendo enquanto a janela é trocada sem risco de conflito.
         # Embora a troca seja rápida, é uma boa prática.
         dados_prontos = dados_agregados["janela_pronta"]
         
