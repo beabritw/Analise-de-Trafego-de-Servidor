@@ -115,7 +115,8 @@ A aplicação precisa saber qual endereço IP do servidor ela deve monitorar. Es
 
 2.  **Abra o arquivo `.env`** com seu editor de código.
 
-3.  **Altere o valor da variável `SERVER_IP`** para o endereço IP da sua máquina na sua rede local.
+3.  **Altere o valor da variável `SERVER_IP`** para o endereço IP da sua máquina na sua rede local. Verifique seu IP com o comando ipconfig
+4.  **e o valor da variável 'SNIFF_INTERFACE' para wlo1**.
 
 
 ### [Windows]
@@ -129,8 +130,10 @@ A aplicação precisa saber qual endereço IP do servidor ela deve monitorar. Es
 2.  **Abra o arquivo `.env`** com seu editor de código.
 
 3.  **Altere o valor da variável `SERVER_IP`** para o endereço IP da sua máquina na sua rede local. Verifique seu IP com o comando ipconfig
+4.  **e o valor da variável 'SNIFF_INTERFACE' para Wi-Fi**.
 
-4. Vá para o site oficial do [Npcap](https://npcap.com/#download) e baixe o instalador mais recente.
+
+5. Vá para o site oficial do [Npcap](https://npcap.com/#download) e baixe o instalador mais recente.
    Durante a instalação, certifique-se de marcar a opção **"Install Npcap in WinPcap API-compatible Mode"**
 
 
